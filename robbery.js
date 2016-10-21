@@ -52,8 +52,8 @@ function convertDate(date, timezone) {
 
 function convertWorkingHours(workingHours, timezone) {
     var newWorkingHours = [];
-    var timeFrom = convertDate(workingHours.from, timezone);
-    var timeTo = convertDate(workingHours.to, timezone);
+    var timeFrom = convertTime(workingHours.from, timezone);
+    var timeTo = convertTime(workingHours.to, timezone);
 
     for (var i = 0; i < BANK_DAYS; ++i) {
         newWorkingHours.push([
