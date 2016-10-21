@@ -114,26 +114,24 @@ function getRobberyInterval(start, finish, duration) {
 
 function getRobberyTimes(schedule, duration, workingHours) {
     var robberyTimes = [];
-    var bankTime = 0;
-    var i = 0;
-    var j = 0;
-    var k = 0;
+    var bankTime = i = j = k = 0;
 
     while (bankTime < workingHours.length) {
-        var start = Math.max(
-            workingHours[bankTime][0],
-            schedule[0][0],
-            schedule[1][0],
-            schedule[2][0]
-        );
-        var finish = Math.min(
-            workingHours[bankTime][1],
-            schedule[0][1],
-            schedule[1][1],
-            schedule[2][1]
-        );
-
-        robberyTimes.concat(getRobberyInterval(start, finish, duration));
+        robberyTimes.concat(getRobberyInterval(
+            Math.max(
+                workingHours[bankTime][0],
+                schedule[i][0],
+                schedule[j][0],
+                schedule[k][0]
+            ),
+            Math.min(
+                workingHours[bankTime][1],
+                schedule[i][1],
+                schedule[j][1],
+                schedule[k][1]
+            ),
+            duration
+        ));
 
         if (++k === schedule[2].length) {
             k = 0;
