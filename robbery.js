@@ -19,7 +19,7 @@ function isCorrectSchedule(schedule) {
 
     var isCorrect = true;
     for (var i = 0; i < keys.length; ++i) {
-        if (schedule[key[i]].length === 0) {
+        if (schedule[keys[i]].length === 0) {
             isCorrect = false;
             break;
         }
@@ -44,7 +44,7 @@ function convertTime(time, timezone) {
 }
 
 function convertDate(date, timezone) {
-    date = date.split(" ");
+    date = date.split(' ');
 
     return DAYS.indexOf(date[0]) * DAY +
            convertTime(date[1], timezone);
@@ -52,8 +52,8 @@ function convertDate(date, timezone) {
 
 function convertWorkingHours(workingHours, timezone) {
     var newWorkingHours = [];
-    var timeFrom = convertDate(workingHours['from'], timezone);
-    var timeTo = convertDate(workingHours['to'], timezone);
+    var timeFrom = convertDate(workingHours.from, timezone);
+    var timeTo = convertDate(workingHours.to, timezone);
 
     for (var i = 0; i < BANK_DAYS; ++i) {
         newWorkingHours.push([
@@ -65,6 +65,13 @@ function convertWorkingHours(workingHours, timezone) {
     return newWorkingHours;
 }
 
+function getTimeInterval(times) {
+    var time = [start, times[0] - MINUTE];
+    start = times[1] + MINUTE;
+
+    return time;
+}
+
 function convertSchedule(schedule, timezone) {
     var newSchedule = [];
     for (var name in schedule) {
@@ -72,8 +79,8 @@ function convertSchedule(schedule, timezone) {
             var persSchedule = schedule[name]
                 .map(function (item) {
                     return [
-                        convertDate(item['from'], timezone),
-                        convertDate(item['to'], timezone)
+                        convertDate(item.from, timezone),
+                        convertDate(item.to, timezone)
                     ];
                 })
                 .sort(function (i, j) {
@@ -82,11 +89,7 @@ function convertSchedule(schedule, timezone) {
 
             var start = DAY_START;
             newSchedule.push(persSchedule
-                .map(function (item) {
-                    var time = [start, item[0] - MINUTE];
-                    start = item[1] + MINUTE;
-                    return time;
-                })
+                .map(getTimeInterval)
                 .push([start, DAY_END])
             );
         }
@@ -105,8 +108,8 @@ exports.isStar = true;
  * @param {Object} schedule – Расписание Банды
  * @param {Number} duration - Время на ограбление в минутах
  * @param {Object} workingHours – Время работы банка
- * @param {String} workingHours.from – Время открытия, например, "10:00+5"
- * @param {String} workingHours.to – Время закрытия, например, "18:00+5"
+ * @param {String} workingHours.from – Время открытия, например, '10:00+5'
+ * @param {String} workingHours.to – Время закрытия, например, '18:00+5'
  * @returns {Object}
  */
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
@@ -114,17 +117,17 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     var roberyTime = [];
 
     if (isCorrectSchedule(schedule)) {
-        var timezone = getTimezone(workingHours['from']);
+        var timezone = getTimezone(workingHours.from);
 
         workingHours = convertWorkingHours(workingHours, timezone);
         schedule = convertSchedule(schedule, timezone);
 
-        workingHours.forEach(function (bankTime) {
+        for(var bankTime = 0; bankTime < workingHours.length; ++bankTime) {
             schedule[0].forEach(function (i) {
                 schedule[1].forEach(function (j) {
                     schedule[2].forEach(function (k) {
-                        var start = Math.min(i[0], j[0], k[0]);
-                        var finish = Math.min(i[1], j[1], k[1]);
+                        var start = Math.max(workingHours[bankTime][0], i[0], j[0], k[0]);
+                        var finish = Math.min(workingHours[bankTime][1],i[1], j[1], k[1]);
 
                         while (start + duration <= finish) {
                             roberyTime.push([start, finish]);
@@ -133,7 +136,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
                     });
                 });
             });
-        });
+        }
     }
 
     return {
@@ -153,7 +156,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         /**
          * Возвращает отформатированную строку с часами для ограбления
          * Например,
-         *   "Начинаем в %HH:%MM (%DD)" -> "Начинаем в 14:59 (СР)"
+         *   'Начинаем в %HH:%MM (%DD)' -> 'Начинаем в 14:59 (СР)'
          * @param {String} template
          * @returns {String}
          */
@@ -161,13 +164,17 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             var time = roberyTime[0][0];
             var day = Math.floor(time / DAY);
             time %= DAY;
-            var hour = Math.floor(time / HOUR);
-            time %= HOUR;
-            var minute = Math.floor(time / MINUTE);
 
-            return template.replace("%DD", DAYS[day])
-                           .replace("%HH", hour.toLocaleString(undefined, { 'minimumIntegerDigits': 2 }))
-                           .replace("%MM", minute.toLocaleString(undefined, { 'minimumIntegerDigits': 2 }));
+            var hour = Math.floor(time / HOUR)
+                .toLocaleString(undefined, {'minimumIntegerDigits': 2});
+            time %= HOUR;
+
+            var minute = Math.floor(time / MINUTE)
+                .toLocaleString(undefined, { 'minimumIntegerDigits': 2 });
+
+            return template.replace('%DD', DAYS[day])
+                           .replace('%HH', hour)
+                           .replace('%MM', minute);
         },
 
         /**
