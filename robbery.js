@@ -74,7 +74,7 @@ function getTimeInterval(persSchedule) {
         return time;
     });
 
-    result.push([start, DAY_END])
+    result.push([start, DAY_END]);
 
     return result;
 }
@@ -125,17 +125,34 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         workingHours = convertWorkingHours(workingHours, timezone);
         schedule = convertSchedule(schedule, timezone);
 
+        var i = 0;
+        var j = 0;
+        var k = 0;
         for (var bankTime = 0; bankTime < workingHours.length; ++bankTime) {
-            for (var i = 0; i < schedule[0].length; ++i) {
-                for (var j = 0; j < schedule[1].length; ++j) {
-                    for (var k = 0; k < schedule[2].length; ++k) {
-                        var start = Math.max(workingHours[bankTime][0], i[0], j[0], k[0]);
-                        var finish = Math.min(workingHours[bankTime][1], i[1], j[1], k[1]);
+            while (i < schedule[0].length) {
+                var start = Math.max(
+                    workingHours[bankTime][0],
+                    schedule[0][0],
+                    schedule[1][0],
+                    schedule[2][0]
+                );
+                var finish = Math.min(
+                    workingHours[bankTime][1],
+                    schedule[0][1],
+                    schedule[1][1],
+                    schedule[2][1]
+                );
 
-                        while (start + duration <= finish) {
-                            roberyTime.push([start, finish]);
-                            start += HALF_HOUR;
-                        }
+                while (start + duration <= finish) {
+                    roberyTime.push([start, finish]);
+                    start += HALF_HOUR;
+                }
+
+                if (++k === schedule[2].length) {
+                    k = 0;
+                    if (++j === schedule[1].length) {
+                        j = 0;
+                        ++i;
                     }
                 }
             }
