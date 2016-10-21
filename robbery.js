@@ -129,13 +129,15 @@ function getrobberyTimes(schedule, workingHours) {
 
         if (++k === schedule[2].length) {
             k = 0;
-            if (++j === schedule[1].length) {
-                j = 0;
-                if (++i === schedule[0].length) {
-                    i = 0;
-                    ++bankTime;
-                }
-            }
+            ++j;
+        }
+        if (j === schedule[1].length) {
+            j = 0;
+            ++i;
+        }
+        if (i === schedule[0].length) {
+            i = 0;
+            ++bankTime;
         }
     }
 
