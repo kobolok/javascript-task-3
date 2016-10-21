@@ -171,7 +171,6 @@ exports.isStar = true;
  * @returns {Object}
  */
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
-    console.info(schedule, duration, workingHours);
     var robberyTimes = [];
 
     if (isCorrectSchedule(schedule)) {
@@ -183,6 +182,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             convertWorkingHours(workingHours, timezone)
         );
     }
+    console.info(robberyTimes);
 
     return {
 
@@ -191,7 +191,6 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
-            console.info(robberyTimes);
             if (robberyTimes.length !== 0) {
                 return true;
             }
@@ -207,6 +206,10 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
+            if (robberyTimes.length === 0) {
+                return '';
+            }
+
             var time = robberyTimes[0][0];
             var day = Math.floor(time / DAY);
             time %= DAY;
