@@ -101,7 +101,18 @@ function convertSchedule(schedule, timezone) {
     return newSchedule;
 }
 
-function getrobberyTimes(schedule, workingHours) {
+function getRobberyInterval(start, finish, duration) {
+    var robberyInterval = [];
+
+    while (start + duration <= finish) {
+        robberyInterval.push([start, finish]);
+        start += HALF_HOUR;
+    }
+
+    return robberyInterval;
+}
+
+function getRobberyTimes(schedule, duration, workingHours) {
     var robberyTimes = [];
     var bankTime = 0;
     var i = 0;
@@ -122,10 +133,7 @@ function getrobberyTimes(schedule, workingHours) {
             schedule[2][1]
         );
 
-        while (start + duration <= finish) {
-            robberyTimes.push([start, finish]);
-            start += HALF_HOUR;
-        }
+        robberyTimes.concat(getRobberyInterval(start, finish, duration));
 
         if (++k === schedule[2].length) {
             k = 0;
@@ -165,8 +173,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     if (isCorrectSchedule(schedule)) {
         var timezone = getTimezone(workingHours.from);
 
-        robberyTimes = getrobberyTimes(
+        robberyTimes = getRobberyTimes(
             convertSchedule(schedule, timezone),
+            duration,
             convertWorkingHours(workingHours, timezone)
         );
     }
