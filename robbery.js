@@ -112,40 +112,43 @@ function getRobberyInterval(start, finish, duration) {
     return robberyInterval;
 }
 
+function incIter(iter, iterMax) {
+    for (var i = iter.length - 1; i >= 0; --i) {
+        if (++iter[i] === iterMax[i].length) {
+            iter[i] = 0;
+        } else {
+            break;
+        }
+    }
+
+    return iter;
+}
+
 function getRobberyTimes(schedule, duration, workingHours) {
     var robberyTimes = [];
     var bankTime = 0;
-    var i = 0;
-    var j = 0;
-    var k = 0;
+    var iter = [0, 0, 0];
+    var iterMax = [schedule[0].length, schedule[1].length, schedule[2].length];
 
     while (bankTime < workingHours.length) {
         robberyTimes.concat(getRobberyInterval(
             Math.max(
                 workingHours[bankTime][0],
-                schedule[i][0],
-                schedule[j][0],
-                schedule[k][0]
+                schedule[iter[0]][0],
+                schedule[iter[1]][0],
+                schedule[iter[2]][0]
             ),
             Math.min(
                 workingHours[bankTime][1],
-                schedule[i][1],
-                schedule[j][1],
-                schedule[k][1]
+                schedule[iter[0]][1],
+                schedule[iter[1]][1],
+                schedule[iter[2]][1]
             ),
             duration
         ));
 
-        if (++k === schedule[2].length) {
-            k = 0;
-            ++j;
-        }
-        if (j === schedule[1].length) {
-            j = 0;
-            ++i;
-        }
-        if (i === schedule[0].length) {
-            i = 0;
+        iter = incIter(iter, iterMax);
+        if (iter[0] === 0) {
             ++bankTime;
         }
     }
