@@ -101,6 +101,47 @@ function convertSchedule(schedule, timezone) {
     return newSchedule;
 }
 
+function getrobberyTimes(schedule, workingHours) {
+    var robberyTimes = [];
+    var bankTime = 0;
+    var i = 0;
+    var j = 0;
+    var k = 0;
+
+    while (bankTime < workingHours.length) {
+        var start = Math.max(
+            workingHours[bankTime][0],
+            schedule[0][0],
+            schedule[1][0],
+            schedule[2][0]
+        );
+        var finish = Math.min(
+            workingHours[bankTime][1],
+            schedule[0][1],
+            schedule[1][1],
+            schedule[2][1]
+        );
+
+        while (start + duration <= finish) {
+            robberyTimes.push([start, finish]);
+            start += HALF_HOUR;
+        }
+
+        if (++k === schedule[2].length) {
+            k = 0;
+            if (++j === schedule[1].length) {
+                j = 0;
+                if (++i === schedule[0].length) {
+                    i = 0;
+                    ++bankTime;
+                }
+            }
+        }
+    }
+
+    return robberyTimes;
+}
+
 /**
  * Сделано задание на звездочку
  * Реализовано оба метода и tryLater
@@ -117,46 +158,15 @@ exports.isStar = true;
  */
 exports.getAppropriateMoment = function (schedule, duration, workingHours) {
     console.info(schedule, duration, workingHours);
-    var roberyTime = [];
+    var robberyTimes = [];
 
     if (isCorrectSchedule(schedule)) {
         var timezone = getTimezone(workingHours.from);
 
-        workingHours = convertWorkingHours(workingHours, timezone);
-        schedule = convertSchedule(schedule, timezone);
-
-        var i = 0;
-        var j = 0;
-        var k = 0;
-        for (var bankTime = 0; bankTime < workingHours.length; ++bankTime) {
-            while (i < schedule[0].length) {
-                var start = Math.max(
-                    workingHours[bankTime][0],
-                    schedule[0][0],
-                    schedule[1][0],
-                    schedule[2][0]
-                );
-                var finish = Math.min(
-                    workingHours[bankTime][1],
-                    schedule[0][1],
-                    schedule[1][1],
-                    schedule[2][1]
-                );
-
-                while (start + duration <= finish) {
-                    roberyTime.push([start, finish]);
-                    start += HALF_HOUR;
-                }
-
-                if (++k === schedule[2].length) {
-                    k = 0;
-                    if (++j === schedule[1].length) {
-                        j = 0;
-                        ++i;
-                    }
-                }
-            }
-        }
+        robberyTimes = getrobberyTimes(
+            convertSchedule(schedule, timezone),
+            convertWorkingHours(workingHours, timezone)
+        );
     }
 
     return {
@@ -166,7 +176,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
-            if (roberyTime.length !== 0) {
+            if (robberyTimes.length !== 0) {
                 return true;
             }
 
@@ -181,7 +191,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
-            var time = roberyTime[0][0];
+            var time = robberyTimes[0][0];
             var day = Math.floor(time / DAY);
             time %= DAY;
 
@@ -203,8 +213,8 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         tryLater: function () {
-            roberyTime.shift();
-            if (roberyTime && roberyTime.length !== 0) {
+            robberyTimes.shift();
+            if (robberyTimes && robberyTimes.length !== 0) {
                 return true;
             }
 
