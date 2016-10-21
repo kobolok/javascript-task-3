@@ -65,11 +65,18 @@ function convertWorkingHours(workingHours, timezone) {
     return newWorkingHours;
 }
 
-function getTimeInterval(times) {
-    var time = [start, times[0] - MINUTE];
-    start = times[1] + MINUTE;
+function getTimeInterval(persSchedule) {
+    var start = DAY_START;
+    var result = persSchedule.map(function (item) {
+        var time = [start, item[0] - MINUTE];
+        start = item[1] + MINUTE;
 
-    return time;
+        return time;
+    });
+
+    result.push([start, DAY_END])
+
+    return result;
 }
 
 function convertSchedule(schedule, timezone) {
@@ -87,11 +94,7 @@ function convertSchedule(schedule, timezone) {
                     return i[0] > j[0] ? -1 : 1;
                 });
 
-            var start = DAY_START;
-            newSchedule.push(persSchedule
-                .map(getTimeInterval)
-                .push([start, DAY_END])
-            );
+            newSchedule.push(getTimeInterval(persSchedule));
         }
     }
 
@@ -122,20 +125,20 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
         workingHours = convertWorkingHours(workingHours, timezone);
         schedule = convertSchedule(schedule, timezone);
 
-        for(var bankTime = 0; bankTime < workingHours.length; ++bankTime) {
-            schedule[0].forEach(function (i) {
-                schedule[1].forEach(function (j) {
-                    schedule[2].forEach(function (k) {
+        for (var bankTime = 0; bankTime < workingHours.length; ++bankTime) {
+            for (var i = 0; i < schedule[0].length; ++i) {
+                for (var j = 0; j < schedule[1].length; ++j) {
+                    for (var k = 0; k < schedule[2].length; ++k) {
                         var start = Math.max(workingHours[bankTime][0], i[0], j[0], k[0]);
-                        var finish = Math.min(workingHours[bankTime][1],i[1], j[1], k[1]);
+                        var finish = Math.min(workingHours[bankTime][1], i[1], j[1], k[1]);
 
                         while (start + duration <= finish) {
                             roberyTime.push([start, finish]);
                             start += HALF_HOUR;
                         }
-                    });
-                });
-            });
+                    }
+                }
+            }
         }
     }
 
@@ -166,7 +169,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             time %= DAY;
 
             var hour = Math.floor(time / HOUR)
-                .toLocaleString(undefined, {'minimumIntegerDigits': 2});
+                .toLocaleString(undefined, { 'minimumIntegerDigits': 2 });
             time %= HOUR;
 
             var minute = Math.floor(time / MINUTE)
