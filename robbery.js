@@ -191,7 +191,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         exists: function () {
-            console.log(robberyTimes);
+            console.info(robberyTimes);
             if (robberyTimes.length !== 0) {
                 return true;
             }
