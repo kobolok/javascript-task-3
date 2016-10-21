@@ -114,7 +114,10 @@ function getRobberyInterval(start, finish, duration) {
 
 function getRobberyTimes(schedule, duration, workingHours) {
     var robberyTimes = [];
-    var bankTime = i = j = k = 0;
+    var bankTime = 0;
+    var i = 0;
+    var j = 0;
+    var k = 0;
 
     while (bankTime < workingHours.length) {
         robberyTimes.concat(getRobberyInterval(
