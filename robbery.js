@@ -68,8 +68,8 @@ function convertWorkingHours(workingHours, timezone) {
 function getTimeInterval(persSchedule) {
     var start = DAY_START;
     var result = persSchedule.map(function (item) {
-        var time = [start, item[0]];
-        start = item[1];
+        var time = [start, item[0] - MINUTE];
+        start = item[1] + MINUTE;
 
         return time;
     });
@@ -211,7 +211,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
-            if (robberyTimes.length === 0) {
+            if (robberyTimes.length === 0 && !template) {
                 return '';
             }
 
