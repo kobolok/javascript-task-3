@@ -68,8 +68,8 @@ function convertWorkingHours(workingHours, timezone) {
 function getTimeInterval(persSchedule) {
     var start = DAY_START;
     var result = persSchedule.map(function (item) {
-        var time = [start, item[0] - MINUTE];
-        start = item[1] + MINUTE;
+        var time = [start, item[0]];
+        start = item[1];
 
         return time;
     });
@@ -91,9 +91,8 @@ function convertSchedule(schedule, timezone) {
                     ];
                 })
                 .sort(function (i, j) {
-                    return i[0] > j[0] ? -1 : 1;
+                    return i[0] < j[0] ? -1 : 1;
                 });
-
             newSchedule.push(getTimeInterval(persSchedule));
         }
     }
@@ -105,7 +104,7 @@ function getRobberyInterval(start, finish, duration) {
     var robberyInterval = [];
 
     while (start + duration <= finish) {
-        robberyInterval.push([start, finish]);
+        robberyInterval.push([start, start + duration]);
         start += HALF_HOUR;
     }
 
@@ -113,12 +112,18 @@ function getRobberyInterval(start, finish, duration) {
 }
 
 function incIter(iter, iterMax) {
-    for (var i = iter.length - 1; i >= 0; --i) {
-        if (++iter[i] === iterMax[i].length) {
+    var incFirst = true;
+    for (var i = iter.length - 1; i > 0; --i) {
+        if (++iter[i] === iterMax[i]) {
             iter[i] = 0;
         } else {
+            incFirst = false;
             break;
         }
+    }
+
+    if (incFirst) {
+        ++iter[0];
     }
 
     return iter;
@@ -126,31 +131,32 @@ function incIter(iter, iterMax) {
 
 function getRobberyTimes(schedule, duration, workingHours) {
     var robberyTimes = [];
-    var bankTime = 0;
-    var iter = [0, 0, 0];
-    var iterMax = [schedule[0].length, schedule[1].length, schedule[2].length];
+    var iter = [0, 0, 0, 0];
+    var iterMax = [
+        workingHours.length,
+        schedule[0].length,
+        schedule[1].length,
+        schedule[2].length
+    ];
 
-    while (bankTime < workingHours.length) {
-        robberyTimes.concat(getRobberyInterval(
+    while (iter[0] < iterMax[0]) {
+        robberyTimes = robberyTimes.concat(getRobberyInterval(
             Math.max(
-                workingHours[bankTime][0],
-                schedule[iter[0]][0],
-                schedule[iter[1]][0],
-                schedule[iter[2]][0]
+                workingHours[iter[0]][0],
+                schedule[0][iter[1]][0],
+                schedule[1][iter[2]][0],
+                schedule[2][iter[3]][0]
             ),
             Math.min(
-                workingHours[bankTime][1],
-                schedule[iter[0]][1],
-                schedule[iter[1]][1],
-                schedule[iter[2]][1]
+                workingHours[iter[0]][1],
+                schedule[0][iter[1]][1],
+                schedule[1][iter[2]][1],
+                schedule[2][iter[3]][1]
             ),
             duration
         ));
 
         iter = incIter(iter, iterMax);
-        if (iter[0] === 0) {
-            ++bankTime;
-        }
     }
 
     return robberyTimes;
@@ -182,7 +188,6 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
             convertWorkingHours(workingHours, timezone)
         );
     }
-    console.info(robberyTimes);
 
     return {
 
@@ -232,8 +237,9 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {Boolean}
          */
         tryLater: function () {
-            robberyTimes.shift();
-            if (robberyTimes && robberyTimes.length !== 0) {
+            if (robberyTimes.length > 1) {
+                robberyTimes.shift();
+
                 return true;
             }
 
