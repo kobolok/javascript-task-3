@@ -10,24 +10,6 @@ var DAY_END = 3 * DAY - MINUTE;
 var HALF_HOUR = MINUTE * 30;
 
 
-function isCorrectSchedule(schedule) {
-    var keys = Object.keys(schedule);
-
-    if (keys.length !== 3) {
-        return false;
-    }
-
-    var isCorrect = true;
-    for (var i = 0; i < keys.length; ++i) {
-        if (schedule[keys[i]].length === 0) {
-            isCorrect = false;
-            break;
-        }
-    }
-
-    return isCorrect;
-}
-
 function getTimezone(time) {
     time = /(\d{2}):(\d{2})\+(\d+)/.exec(time);
 
@@ -68,8 +50,8 @@ function convertWorkingHours(workingHours, timezone) {
 function getTimeInterval(persSchedule) {
     var start = DAY_START;
     var result = persSchedule.map(function (item) {
-        var time = [start, item[0] - MINUTE];
-        start = item[1] + MINUTE;
+        var time = [start, item[0]];
+        start = item[1];
 
         return time;
     });
@@ -100,23 +82,13 @@ function convertSchedule(schedule, timezone) {
     return newSchedule;
 }
 
-function getRobberyInterval(start, finish, duration) {
-    var robberyInterval = [];
-
-    while (start + duration <= finish) {
-        robberyInterval.push([start, start + duration]);
-        start += HALF_HOUR;
-    }
-
-    return robberyInterval;
-}
-
 function incIter(iter, iterMax) {
     var incFirst = true;
     for (var i = iter.length - 1; i > 0; --i) {
         if (++iter[i] === iterMax[i]) {
             iter[i] = 0;
-        } else {
+        }
+        else {
             incFirst = false;
             break;
         }
@@ -129,30 +101,50 @@ function incIter(iter, iterMax) {
     return iter;
 }
 
-function getRobberyTimes(schedule, duration, workingHours) {
-    var robberyTimes = [];
-    var iter = [0, 0, 0, 0];
-    var iterMax = [
-        workingHours.length,
-        schedule[0].length,
-        schedule[1].length,
-        schedule[2].length
+function getRobberyInterval(start, finish, duration) {
+    var robberyInterval = [];
+
+    while (start + duration <= finish) {
+        robberyInterval.push([start, start + duration]);
+        start += HALF_HOUR;
+    }
+
+    return robberyInterval;
+}
+
+function getMinMax(fullSchedule, iter) {
+    var result = [
+        fullSchedule[0][iter[0]][0],
+        fullSchedule[0][iter[0]][1]
     ];
 
+    for (var i = 1; i < fullSchedule.length; ++i) {
+        result[0] = Math.max(result[0], fullSchedule[i][iter[i]][0]);
+        result[1] = Math.min(result[1], fullSchedule[i][iter[i]][1]);
+    }
+
+    return result;
+}
+
+function getIters(iter, iterMax, fullSchedule) {
+    for (var i = 0; i < fullSchedule.length; ++i) {
+        iter.push(0);
+        iterMax.push(fullSchedule[i].length);
+    }
+}
+
+function getRobberyTimes(fullSchedule, duration) {
+    var robberyTimes = [];
+    var iter = [];
+    var iterMax = [];
+
+    getIters(iter, iterMax, fullSchedule);
+
     while (iter[0] < iterMax[0]) {
+        var minMax = getMinMax(fullSchedule, iter);
         robberyTimes = robberyTimes.concat(getRobberyInterval(
-            Math.max(
-                workingHours[iter[0]][0],
-                schedule[0][iter[1]][0],
-                schedule[1][iter[2]][0],
-                schedule[2][iter[3]][0]
-            ),
-            Math.min(
-                workingHours[iter[0]][1],
-                schedule[0][iter[1]][1],
-                schedule[1][iter[2]][1],
-                schedule[2][iter[3]][1]
-            ),
+            minMax[0],
+            minMax[1],
             duration
         ));
 
@@ -176,18 +168,14 @@ exports.isStar = true;
  * @param {String} workingHours.to – Время закрытия, например, '18:00+5'
  * @returns {Object}
  */
-exports.getAppropriateMoment = function (schedule, duration, workingHours) {
+exports.getAppropriateMoment = function sad(schedule, duration, workingHours) {
     var robberyTimes = [];
 
-    if (isCorrectSchedule(schedule)) {
-        var timezone = getTimezone(workingHours.from);
+    var timezone = getTimezone(workingHours.from);
+    var fullSchedule = [convertWorkingHours(workingHours, timezone)];
+    fullSchedule = fullSchedule.concat(convertSchedule(schedule, timezone));
 
-        robberyTimes = getRobberyTimes(
-            convertSchedule(schedule, timezone),
-            duration,
-            convertWorkingHours(workingHours, timezone)
-        );
-    }
+    robberyTimes = getRobberyTimes(fullSchedule, duration);
 
     return {
 
@@ -211,7 +199,7 @@ exports.getAppropriateMoment = function (schedule, duration, workingHours) {
          * @returns {String}
          */
         format: function (template) {
-            if (robberyTimes.length === 0 && !template) {
+            if (robberyTimes.length === 0 || !template) {
                 return '';
             }
 
