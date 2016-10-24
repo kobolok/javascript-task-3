@@ -87,8 +87,7 @@ function incIter(iter, iterMax) {
     for (var i = iter.length - 1; i > 0; --i) {
         if (++iter[i] === iterMax[i]) {
             iter[i] = 0;
-        }
-        else {
+        } else {
             incFirst = false;
             break;
         }
