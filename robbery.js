@@ -141,12 +141,12 @@ function getRobberyTimes(fullSchedule, duration) {
 
     while (iter[0] < iterMax[0]) {
         var minMax = getMinMax(fullSchedule, iter);
+
         robberyTimes = robberyTimes.concat(getRobberyInterval(
             minMax[0],
             minMax[1],
             duration
         ));
-
         iter = incIter(iter, iterMax);
     }
 
